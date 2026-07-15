@@ -1,0 +1,52 @@
+# Python virtual environments
+.venv/
+venv/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Compiled objects / libraries
+*.o
+*.obj
+*.exe
+*.out
+a.out
+*.so
+*.dll
+*.lib
+
+# CUDA / workbook build outputs (extensionless binaries produced by nvcc cells)
+buggy
+verify
+sol
+sol0
+sol1
+solution
+fixed
+mva_baseline
+mva_v1
+mva_v2
+mva_infer_baseline
+mva_infer_optimized
+
+# Profiler outputs
+*.qdrep
+*.nsys-rep
+*.ncu-rep
+*.sqlite
+
+# Build directories
+build/
