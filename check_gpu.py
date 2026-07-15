@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GPU environment check for the HSF-India GPU course.
+"""GPU environment check for the CoDaS-HEP 2026 GPU course.
 
 Run it directly from a terminal::
 
@@ -133,7 +133,7 @@ def _print_table(title, rows):
 
 def main() -> int:
     print("=" * 68)
-    print("HSF-India GPU course - environment check")
+    print("CoDaS-HEP 2026 - GPU environment check")
     print("=" * 68)
 
     cli_ok, cli_rows = check_cli_tools()
