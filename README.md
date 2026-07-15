@@ -1,20 +1,20 @@
 <!--
 README Documentation Comment
 
-This README provides an overview of the HSF-India-GPU-IISER-Pune-2026 repository, which contains tutorials, demos, and analysis scripts for GPU programming in the context of the HSF-India parallel programming and GPU course. It details the repository structure, including modules on CUDA basics, unified memory, streaming, profiling, advanced topics, neural network demos, analysis scripts, and notebook verification tools. The README also lists available presentations, describes the contents and purpose of each module, and provides instructions for getting started and using the verification script. Attribution for external code and licensing information are included. The document is intended to guide users through the repository's resources and facilitate learning and analysis of GPU programming techniques.
+This README provides an overview of the CoDaS-HEP 2026, Princeton repository, which contains tutorials, demos, and analysis scripts for GPU programming in the context of the HSF-India parallel programming and GPU course. It details the repository structure, including modules on CUDA basics, unified memory, streaming, profiling, advanced topics, neural network demos, analysis scripts, and notebook verification tools. The README also lists available presentations, describes the contents and purpose of each module, and provides instructions for getting started and using the verification script. Attribution for external code and licensing information are included. The document is intended to guide users through the repository's resources and facilitate learning and analysis of GPU programming techniques.
 -->
-# HSF-India-GPU-IISER-Pune-2026
+# CoDaS-HEP 2026, Princeton
 
 This repository provides tutorials, demos, and analysis scripts for GPU programming, tailored for the HSF-India GPU course. Materials are organized into modules covering CUDA basics, unified memory, streaming, profiling, HEP physics usecases and neural network demos.
 
 
 Presentations:
-- Session 1 - https://1drv.ms/p/c/5a70ac10b7f66de0/IQRorVTGUoH2SoGFYU4ZN59QAW0z_4e0xtnG8t7HhS3xASc
+- Session 1 - https://1drv.ms/p/c/5a70ac10b7f66de0/IQBCddvYryMcSp1M0Jffv3c9AeNlQ0UZgff66wyW6UIJGjo?e=ikThrV
 
 
-- Session 2 - https://1drv.ms/p/c/5a70ac10b7f66de0/IQCIhw6iI0csToQqFloZb6rtAe7Xyb8dd_ALRJRGQrDG78Q
+- Session 2 - https://1drv.ms/p/c/5a70ac10b7f66de0/IQBH1OhQ9qg5R5sCR0QUaKdVAbZsH2aH8r2MMfdNJ6CyZL0?e=UqZBwF
 
-- Session 3 - https://1drv.ms/p/c/5a70ac10b7f66de0/IQRJghX87dh-SaFOcgFho8kWAT6QY4Ukeox9B9u2-dS1zeI
+- Session 3 - https://1drv.ms/p/c/5a70ac10b7f66de0/IQCtJa6uHPUuRqwlhDJHAQitASNoc_xlrQrWeOY9nYD7Gk8?e=cPUO13
 
 
 
@@ -61,6 +61,36 @@ Presentations:
   - Notebook: `RT_cores_ray_tracing_tutorial.ipynb`
   - Editable examples in `edit/`: CPU ray-tracing baseline, NVIDIA-style CUDA ray tracer, and a minimal OptiX project skeleton
   - Covers a CPU ray-tracing baseline, RT acceleration concepts, external runnable example files, side-by-side NVIDIA/AMD/Intel ecosystem notes, and a physics-oriented photon propagation example for distant-galaxy light transport
+
+- **11/** – Learning GPU Programming with AI (supervising AI while still learning the material)  
+  - Standalone guide and guided notebook: `README.md`, `Session_AI_Native_GPU.ipynb`
+  - The five-phase loop (SPECIFY → GENERATE → PREDICT → VERIFY → DIAGNOSE) where the student owns everything except code generation
+  - Self-contained HEP final project: `final-project/mva_infer_baseline.cu` (correct-but-slow LHCb Allen MVA trigger kernel to profile and accelerate) with a worked answer in `final-project/solutions/`
+  - Reusable workbook `TEMPLATE_ai_workbook.md` and AI-resilient grading in `grading/`
+  - Every hands-on module (01–10) has an `ai-workbook/` companion that applies this supervision layer to that module's topic, each with an intentionally buggy AI-written example, a verification harness with a CPU reference, and a worked `solutions/` folder
+
+### AI workbooks (per module)
+
+Each `NN/ai-workbook/` folder is a short companion that reuses the Module 11 loop. It is organised as two student notebooks plus the program files they run:
+
+- **`problem.ipynb`** — the explanation and the problem, with links to the problem program and cells that reproduce the bug and run your verification harness.
+- **`solution.ipynb`** — the worked fix and explanation, with cells that build and run the solution at the end.
+- the **problem program** (an AI-written example that compiles/runs but is subtly wrong), a **`verify_*` harness** with a built-in CPU reference and PASS/FAIL gate that defaults to FAIL until you complete it, and a **`solutions/`** directory with the corrected program.
+
+Start each with `problem.ipynb`. The intentional bug per module:
+
+| Module | Topic | Intentional bug demonstrated |
+|--------|-------|------------------------------|
+| 01 | vector add | missing `cudaDeviceSynchronize()` (host reads before GPU finishes) |
+| 02 | unified memory / SAXPY | wrong thread index (`*` vs `+`); prefetch lesson |
+| 03 | streams & profiling | cross-stream race (copy on the wrong stream) |
+| 04 | Python on GPUs / HEP | histogram scatter without accumulation (GPU: no `atomicAdd`) |
+| 05 | generators / analysis | `float32` accumulation precision loss |
+| 06 | Geant4 / Celeritas | calorimeter energy scatter-add race |
+| 07 | neural network demo | softmax reduced over the wrong axis |
+| 08 | N-body | fused force + integrate in one kernel (whole-grid race) |
+| 09 | ray tracing | wrong intersection root (far instead of near) |
+| 10 | accelerated Python | in-place stencil without double-buffering |
 
 
 
