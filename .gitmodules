@@ -1,6 +1,3 @@
-[submodule "09"]
-	path = 09
-	url = https://github.com/NVIDIA/accelerated-computing-hub.git
 [submodule "10"]
 	path = 10
 	url = https://github.com/NVIDIA/accelerated-computing-hub.git
