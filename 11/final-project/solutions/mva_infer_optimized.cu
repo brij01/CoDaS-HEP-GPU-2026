@@ -186,15 +186,21 @@ int main(int argc, char** argv) {
     std::printf("  throughput           : %.2f M events/sec\n", throughput / 1e6);
 
     // -------------------- correctness gate (same as baseline) --------------------
+    // Sample events spread across the WHOLE range, always including the last
+    // event, so a non-multiple-of-block count actually catches dropped bounds
+    // checks / grid-stride off-by-one bugs (they corrupt the tail, not the head).
     const int sample = num_events < 10000 ? num_events : 10000;
+    const int stride = num_events / sample;   // >= 1; spreads the sample over [0, num_events)
     double max_abs_err = 0.0;
     bool range_ok = true;
-    for (int i = 0; i < sample; ++i) {
+    auto check_event = [&](int i) {
         float ref = evaluate_cpu(model, &h_aos[(size_t)i * NUM_INPUT]);
         double err = std::fabs((double)ref - (double)h_output[i]);
         if (err > max_abs_err) max_abs_err = err;
         if (h_output[i] < 0.0f || h_output[i] > 1.0f) range_ok = false;
-    }
+    };
+    for (int s = 0; s < sample; ++s) check_event(s * stride);
+    check_event(num_events - 1);   // always test the very last event (the tail)
     const double tol = 1e-5;
     bool pass = (max_abs_err <= tol) && range_ok;
     std::printf("  max abs error vs CPU : %.3e (tol %.1e)\n", max_abs_err, tol);
