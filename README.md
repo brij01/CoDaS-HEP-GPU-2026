@@ -138,10 +138,13 @@ Each module contains Jupyter notebooks (`.ipynb`) with explanations, code sample
 ## License
 
 The **original course material** in this repository is licensed under the
-**Apache License 2.0** — see [LICENSE](LICENSE). Copyright © 2025 Brij Kishor Jashal.
+**Creative Commons Attribution 4.0 International License (CC BY 4.0)** — see
+[LICENSE](LICENSE). Copyright © 2025 Brij Kishor Jashal. CC BY 4.0 fits this
+repository's mostly-educational content (notebooks, slides, write-ups); reuse is
+allowed with attribution.
 
 This repository also bundles or adapts third-party material that keeps its **own**
-license — it is *not* relicensed under Apache-2.0. See [NOTICE](NOTICE) for full
+license — it is *not* relicensed under CC BY 4.0. See [NOTICE](NOTICE) for full
 attribution. In short:
 
 - **Modules 01–03** — adapted from **NVIDIA Deep Learning Institute** ("Fundamentals

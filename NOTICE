@@ -3,14 +3,15 @@ Copyright 2025 Brij Kishor Jashal
 
 This product includes software and educational materials developed for the
 CoDaS-HEP 2026 school at Princeton. The original contributions in this
-repository are licensed under the Apache License, Version 2.0 (see LICENSE).
+repository are licensed under the Creative Commons Attribution 4.0 International
+License (CC BY 4.0); see LICENSE.
 
 --------------------------------------------------------------------------------
 Third-party components
 --------------------------------------------------------------------------------
 
 This repository bundles or adapts material from third parties. Those components
-are NOT relicensed under this repository's Apache-2.0 license; each retains its
+are NOT relicensed under this repository's CC BY 4.0 license; each retains its
 own license and copyright, as noted below. "You can only license what you own."
 
 1. NVIDIA Deep Learning Institute course material  (modules 01, 02, 03)
@@ -25,7 +26,7 @@ own license and copyright, as noted below. "You can only license what you own."
 
    These materials remain the property of NVIDIA Corporation and are used for
    educational purposes under NVIDIA's terms. They are NOT covered by this
-   repository's Apache-2.0 license.
+   repository's CC BY 4.0 license.
 
 2. NVIDIA Accelerated Computing Hub  (module 10, git submodule `10/`)
    ------------------------------------------------------------------------
@@ -63,7 +64,7 @@ own license and copyright, as noted below. "You can only license what you own."
 Summary
 --------------------------------------------------------------------------------
 
-  - Original course material authored for this repository: Apache-2.0.
+  - Original course material authored for this repository: CC BY 4.0.
   - Modules 01-03: adapted from NVIDIA DLI material; NVIDIA's terms apply.
   - Module 10 (submodule): NVIDIA, Apache-2.0 (code) + CC BY-NC-SA 4.0 (content).
   - 07/gpu-demo: LHCb Allen, (c) CERN, Apache-2.0.
