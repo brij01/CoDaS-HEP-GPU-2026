@@ -18,6 +18,9 @@ __pycache__/
 Thumbs.db
 desktop.ini
 
+# Office temporary/lock files
+~$*
+
 # Compiled objects / libraries
 *.o
 *.obj
@@ -50,3 +53,13 @@ mva_infer_optimized
 
 # Build directories
 build/
+
+# Module 07 gpu-demo build artifacts and vendored/generated files
+07/gpu-demo/neural_network_test
+07/gpu-demo/json_generator
+07/gpu-demo/nlohmann/
+07/gpu-demo/*.json
+07/gpu-demo/generated_models/
+
+# Local presentation drafts (kept out of the repo)
+slides/

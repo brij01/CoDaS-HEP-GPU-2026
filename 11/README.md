@@ -162,7 +162,7 @@ skill the module is training.
   the correct-but-slow baseline with its built-in CPU reference and PASS/FAIL
   gate.
 - [final-project/solutions/](final-project/solutions/) — a worked, explained
-  optimized version.
+  optimized version, with a runnable [solution notebook](final-project/solutions/solution.ipynb).
 - [grading/grading_guide.md](grading/grading_guide.md) — the AI-resilient grading
   guide (for instructors and for self-assessment).
 - [grading/self_check.md](grading/self_check.md) — a fast checklist to run on

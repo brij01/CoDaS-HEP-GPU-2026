@@ -9,6 +9,10 @@ This folder contains **one** worked answer to the final project:
 answer — it is an example of what a solid pass through the 5-phase loop produces,
 written up the way your own workbook should be.
 
+To run the worked answer end to end (build → verify → profile), use the companion
+notebook [solution.ipynb](solution.ipynb); it mirrors the guided
+[../../Session_AI_Native_GPU.ipynb](../../Session_AI_Native_GPU.ipynb) on the solution side.
+
 ## The problem, restated
 
 The baseline ([../mva_infer_baseline.cu](../mva_infer_baseline.cu)) runs a tiny

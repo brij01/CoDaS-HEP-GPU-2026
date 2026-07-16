@@ -91,7 +91,7 @@ Start each with `problem.ipynb`. The intentional bug per module:
 | 04 | Python on GPUs / HEP | histogram scatter without accumulation (GPU: no `atomicAdd`) |
 | 05 | generators / analysis | `float32` accumulation precision loss |
 | 06 | Geant4 / Celeritas | calorimeter energy scatter-add race |
-| 07 | neural network demo | softmax reduced over the wrong axis |
+| 07 | neural network demo | GPU inference normalized with batch statistics instead of the model's fixed mean/std (fast but wrong) |
 | 08 | N-body | fused force + integrate in one kernel (whole-grid race) |
 | 09 | ray tracing | wrong intersection root (far instead of near) |
 | 10 | accelerated Python | in-place stencil without double-buffering |
@@ -137,7 +137,26 @@ Each module contains Jupyter notebooks (`.ipynb`) with explanations, code sample
 
 ## License
 
-Refer to individual files and notebooks for licensing and attribution information.
+The **original course material** in this repository is licensed under the
+**Apache License 2.0** — see [LICENSE](LICENSE). Copyright © 2025 Brij Kishor Jashal.
+
+This repository also bundles or adapts third-party material that keeps its **own**
+license — it is *not* relicensed under Apache-2.0. See [NOTICE](NOTICE) for full
+attribution. In short:
+
+- **Modules 01–03** — adapted from **NVIDIA Deep Learning Institute** ("Fundamentals
+  of Accelerated Computing with CUDA C/C++" and related). © NVIDIA Corporation;
+  NVIDIA's terms apply.
+- **Module 10** (`10/`, git submodule of NVIDIA/accelerated-computing-hub) —
+  **Apache-2.0** for code ([10/LICENSE-CODE](10/LICENSE-CODE)) and
+  **CC BY-NC-SA 4.0** (non-commercial) for content ([10/LICENSE](10/LICENSE)).
+- **`07/gpu-demo/`** — derived from **LHCb Allen**, © CERN, Apache-2.0 (header
+  retained in the sources).
+- **Heat-conduction example** (`01/`) — credited to a University of Houston OpenACC example.
+
+> Because of the NVIDIA DLI material and the non-commercial (CC BY-NC-SA 4.0)
+> content in module 10, the repository **as a whole is not uniformly
+> permissive/commercial-friendly**. Check the individual licenses before reuse.
 
 ---
 
