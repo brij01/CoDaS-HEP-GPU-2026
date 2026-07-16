@@ -41,10 +41,12 @@ Presentations:
   - Supporting assets: `data/`, `img/`
 
 - **05/** – Particle physics generators and GPU-friendly analysis  
-  - Notebook: `generator_tutorial_gpu_annotated.ipynb`
+  - Notebook: `generator_tutorial_gpu_annotated.ipynb` — CVMFS/Key4hep: CPU event generation with `mg5_aMC`, GPU matrix elements with MadGraph **CUDACPP**, and a NumPy-vs-CuPy toy
+  - Factored helpers: `gen-demo/gen_demo.py` (`verify_toolchain`, `generate_cpu`, `matrix_element_gpu_benchmark`, `toy_matrix_element`)
 
-- **06/** – GPU-accelerated Geant4, TileCal geometry, and Celeritas  
-  - Notebook: `gpu_dd4hep_tilecal.ipynb`
+- **06/** – GPU-accelerated Geant4: Celeritas and AdePT (TileCal geometry)  
+  - Notebook: `gpu_dd4hep_tilecal.ipynb` — CVMFS-based **CPU-vs-GPU** with two GPU EM-transport engines (**Celeritas** via Key4hep, **AdePT** via the LCG `devAdePT` view), plus a "where to contribute" section
+  - Factored helpers: `adept-demo/adept_demo.py` (`verify_adept`, `run_example1`)
   - Documentation: `gpu_geant4_dd4hep_cuda_notebook.md`
   - Geometry input: `TileTB_2B1EB_nobeamline.gdml`
 

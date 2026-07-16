@@ -9,120 +9,73 @@ jupyter:
 ---
 
 
-# GPU-Accelerated Geant4 with TileCal Geometry and Celeritas
+# GPU-Accelerated Geant4: Celeritas and AdePT with TileCal Geometry
 
 > Checked against upstream documentation in May 2026.
 >
 > Official Celeritas docs: https://celeritas-project.github.io/celeritas/user/index.html
 > Celeritas quick start: https://celeritas-project.github.io/celeritas/user/index.html#quick-start-guide
 > Geant4 integration examples: https://github.com/celeritas-project/celeritas/tree/main/example/geant4
+> AdePT project: https://github.com/apt-sim/AdePT
 > DD4hep project page: https://dd4hep.web.cern.ch/dd4hep/
 > Geant4 documentation: https://geant4.web.cern.ch/documentation
 > TileCal geometry and macro source: https://github.com/celeritas-project/atlas-tilecal-integration
 >
 > Note: the TileCal repository is still useful for the GDML geometry and macro cards, but its build and integration instructions predate the current Celeritas Geant4 API. In this notebook we use that repository only as a source of geometry and macro files.
 
-This notebook walks through a minimal, current Geant4 plus Celeritas workflow:
+Detector simulation is one of the largest CPU consumers in HEP, and the hot path is **electromagnetic transport** — the e⁻/e⁺/γ showers inside calorimeters. Two CERN R&D projects offload exactly that to the **GPU** while Geant4 keeps the rest of the event on the CPU:
 
-1. Install a recent Celeritas toolchain with Spack.
+- **[Celeritas](https://github.com/celeritas-project/celeritas)** — GPU transport library with a Geant4 tracking-manager offload (Apache-2.0).
+- **[AdePT](https://github.com/apt-sim/AdePT)** — lightweight Geant4 plugin that offloads EM transport via G4HepEm + VecGeom (Apache-2.0).
+
+This notebook has two goals — **run simulation on the GPU** (same physics on CPU vs GPU, measure the speed-up) and **show where you can contribute** to these active projects. Everything runs from **CVMFS**, so nothing is installed locally:
+
+1. Set up a prebuilt Geant4 + Celeritas toolchain from CVMFS (Key4hep) — no Spack, no build.
 2. Download the TileCal GDML geometry and macro files.
 3. Build a small Geant4 application using the current Celeritas tracking-manager integration path.
-4. Compare CPU-only and GPU-enabled runs.
-5. Inspect the generated Celeritas diagnostics output.
+4. **Celeritas:** compare CPU-only and GPU-enabled runs and inspect the diagnostics.
+5. **AdePT:** run the standalone Geant4 + AdePT `example1` (GPU EM transport) from the CVMFS `devAdePT` view.
+6. **Contribute:** the GPU-simulation landscape and good first issues.
 
-The example below uses the TileCal geometry distributed in the DD4hep/Celeritas ecosystem, but the executable itself is a plain Geant4 application that loads GDML directly. That keeps the lesson aligned with the current upstream integration examples and avoids stale DDG4-specific code.
+The example below uses the TileCal geometry distributed in the DD4hep/Celeritas ecosystem, but the executable itself is a plain Geant4 application that loads GDML directly.
 
----
-
-## 0 Environment setup
-
-### 0.1 Optional Python environment for Jupyter
-
-```bash
-# %%bash --no-raise-error
-conda create -n tilegpu -y -c conda-forge python=3.11 jupyterlab
-conda activate tilegpu
-```
-
-### 0.2 Bootstrap Spack
-
-```bash
-# %%bash
-set -euo pipefail
-SPACK_DIR=$HOME/spack
-if [ ! -d "$SPACK_DIR" ]; then
-  git clone --depth=1 https://github.com/spack/spack.git "$SPACK_DIR"
-fi
-. "$SPACK_DIR/share/spack/setup-env.sh"
-```
-
-Spack is the simplest way to install a consistent Geant4 plus Celeritas stack on Linux or WSL2.
+> This Markdown mirrors `gpu_dd4hep_tilecal.ipynb`; the notebook is the canonical, runnable version.
 
 ---
 
-## 1 Install Celeritas, Geant4, and DD4hep
+## 0 Environment setup — Key4hep from CVMFS
 
-The current Celeritas quick-start recommends using Spack for development and integration builds. Geant4 tracking-manager offload requires Geant4 11.0 or newer.
+This notebook targets a **Linux node with an NVIDIA GPU** and a mounted **CVMFS**. Instead of building Geant4/Celeritas from source, it uses the prebuilt **Key4hep** stack from CVMFS, which ships Geant4, DD4hep, and Celeritas ready to use — so there is **no `spack install` and no long compile**.
 
-If you have an NVIDIA GPU, set the CUDA architecture that matches your hardware before installing. For example, replace `80` below with the right value for your GPU.
+The whole setup is a single `source`:
 
 ```bash
 # %%bash
-set -euo pipefail
-. "$HOME/spack/share/spack/setup-env.sh"
-
-# Base compiler settings
-spack config add packages:all:variants:"cxxstd=17"
-
-# Optional GPU support
-spack external find cuda || true
-# Uncomment and adjust if you want a GPU-enabled build.
-# spack config add packages:all:variants:"+cuda cuda_arch=80"
-
-# Install the packages used in this lesson.
-spack install celeritas dd4hep
-spack load celeritas dd4hep
-
-# Quick sanity checks
-geant4-config --version
-ddsim --help >/dev/null 2>&1 || true
-spack find --loaded
+source /cvmfs/sw.hsf.org/key4hep/setup.sh
+set -e
+geant4-config --version && echo "geant4-config: OK"
+cmake --version | head -n1
+command -v nvidia-smi >/dev/null 2>&1 \
+  && nvidia-smi --query-gpu=name,driver_version --format=csv,noheader \
+  || echo "nvidia-smi: not found (GPU runs will fall back to CPU)"
 ```
 
-Notes:
+**Recommended:** source Key4hep in your shell *before* launching Jupyter / VS Code so the kernel inherits it. The notebook does not rely on that — every `%%bash` build/run cell re-sources Key4hep, and the Python run helper does too. Add `-r <YYYY-MM-DD>` to pin a release.
 
-- `spack install celeritas` brings in Geant4 and the Geant4-facing Celeritas libraries.
-- `dd4hep` is included here so the software stack matches the broader detector-description workflow, even though the minimal example below reads GDML directly.
-- If you want to force CPU-only runs later, set `CELER_DISABLE_DEVICE=1` in the runtime environment.
+---
 
-### 1.1 Configure an existing installation for this notebook
+## 1 What the Key4hep stack provides
 
-If Geant4 and Celeritas are already installed, you do not need to reinstall them for every session. The important part is to start Jupyter from a shell where the Celeritas, Geant4, and DD4hep environment is already loaded.
+Sourcing `/cvmfs/sw.hsf.org/key4hep/setup.sh` puts a consistent, prebuilt HEP toolchain on your `PATH` and `CMAKE_PREFIX_PATH`:
 
-Recommended launch flow:
+- **Geant4** (11.x) — with the tracking-manager offload interface Celeritas needs.
+- **DD4hep** — detector description (the minimal example reads GDML directly, but DD4hep matches the broader workflow).
+- **Celeritas** — the GPU transport library, built with CUDA in the CVMFS release.
+- **CMake** and a C++17 compiler.
 
-```bash
-conda activate tilegpu
-. "$HOME/spack/share/spack/setup-env.sh"
-spack load celeritas dd4hep
-jupyter lab
-```
+Because the stack is prebuilt on CVMFS there is **no `spack install` and no long compile**. If the release you sourced lacks Celeritas, pin a newer one with `-r <YYYY-MM-DD>`.
 
-Before running the build cells in this notebook, verify that the toolchain is visible:
-
-```bash
-. "$HOME/spack/share/spack/setup-env.sh"
-spack load celeritas dd4hep
-which geant4-config
-cmake --version
-geant4-config --version
-spack find --loaded
-```
-
-Two practical notes:
-
-- If you open the notebook from VS Code or Jupyter without launching from a preloaded shell, the Python kernel may not see the same Geant4 and Celeritas environment as your terminal.
-- The `%%bash` cells in this notebook explicitly source Spack and load the packages again before building so the notebook does not rely on inherited shell state.
+GPU note: whether a run uses the GPU is decided at **runtime**, not build time. The comparison cells toggle `CELER_DISABLE_DEVICE` to force CPU-only vs GPU execution of the *same* binary; if no NVIDIA GPU is visible, Celeritas falls back to CPU. Each `%%bash` cell re-sources Key4hep, and the Python run helper wraps the executable in a Key4hep-sourced shell, so the notebook works whether or not you launched Jupyter from a Key4hep shell.
 
 ---
 
@@ -321,15 +274,14 @@ Using `0.6` here keeps the example compatible with current stable Celeritas inst
 
 ```bash
 # %%bash
-set -euo pipefail
-. "$HOME/spack/share/spack/setup-env.sh"
-spack load celeritas dd4hep
+source /cvmfs/sw.hsf.org/key4hep/setup.sh
+set -e
 
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
 
-This replaces the older hand-written `g++` command that relied on nonstandard environment variables such as `CELERITAS_INCLUDE_DIRS`. The current upstream recommendation is to use CMake plus `find_package(Celeritas ...)`.
+The build uses CMake plus `find_package(Celeritas ...)` / `find_package(Geant4 ...)`, both resolved from the Key4hep `CMAKE_PREFIX_PATH`.
 
 If your Celeritas build includes MPI support and you only want a single-process notebook run, set `CELER_DISABLE_PARALLEL=1` before executing the benchmark cells.
 
@@ -344,6 +296,9 @@ import subprocess
 import time
 
 
+KEY4HEP_SETUP = "/cvmfs/sw.hsf.org/key4hep/setup.sh"
+
+
 def run_tile(macro: str, use_gpu: bool):
     env = os.environ.copy()
     env.setdefault("CELER_DISABLE_PARALLEL", "1")
@@ -352,10 +307,13 @@ def run_tile(macro: str, use_gpu: bool):
     else:
         env.pop("CELER_DISABLE_DEVICE", None)
 
-    exe = pathlib.Path("build/tile_gpu")
+    # Run inside a shell that sources Key4hep so the Geant4/Celeritas runtime
+    # libraries (from CVMFS) are on the library path, regardless of how Jupyter
+    # was launched. CELER_DISABLE_DEVICE is honoured at runtime.
+    cmd = f'source "{KEY4HEP_SETUP}" >/dev/null 2>&1; exec ./build/tile_gpu "{macro}"'
     t0 = time.perf_counter()
     result = subprocess.run(
-        [str(exe), macro],
+        ["bash", "-c", cmd],
         env=env,
         text=True,
         capture_output=True,
@@ -447,17 +405,60 @@ Expected discussion point: GPUs usually amortize setup costs better as the probl
 
 ---
 
+## 8 AdePT — a second GPU EM-transport engine
+
+Celeritas above offloaded EM transport by *replacing* Geant4's transport on the GPU. **[AdePT](https://github.com/apt-sim/AdePT)** takes a complementary route: it is a **Geant4 plugin** that keeps Geant4 in charge and offloads the e⁻/e⁺/γ shower to the GPU via **G4HepEm** physics on **VecGeom** geometry.
+
+AdePT ships a standalone Geant4 application, `example1`, run straight from CVMFS. Source the LCG `devAdePT` view (separate from Key4hep):
+
+```bash
+source /cvmfs/sft.cern.ch/lcg/views/devAdePT/latest/x86_64-el9-gcc13-opt/setup.sh
+```
+
+The factored helper `06/adept-demo/adept_demo.py` sources that view and provides `verify_adept()` and `run_example1(run=...)`:
+
+```python
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path("adept-demo").resolve()))
+import adept_demo as ad
+
+ad.verify_adept()
+# On a GPU node, launch the GPU EM-transport example and time it:
+#     ad.run_example1(macro="example1.mac", run=True)
+ad.run_example1(run=False)
+```
+
+`example1` runs the EM shower on the GPU; a standard-Geant4 build without the AdePT physics constructor is the CPU baseline — the same CPU-vs-GPU contrast the Celeritas cells measured with `CELER_DISABLE_DEVICE`. If `example1` is not prebuilt in the view, the helper prints the one-time `git clone` + `cmake` build commands. Requirements (all in the `devAdePT` view): Geant4 > 11, VecGeom ≥ 2.0.0-rc.4, G4HepEm, CUDA > 12, C++20.
+
+---
+
+## 9 Where you can contribute
+
+GPU-accelerated detector simulation is an active, open R&D area and welcomes newcomers. All four projects are open source and take external pull requests.
+
+| Project | Role in the GPU stack | Good first contributions | Links |
+| --- | --- | --- | --- |
+| **Celeritas** | GPU transport library + Geant4 offload | reproduce/report benchmarks, validation plots, docs, physics tests | [repo](https://github.com/celeritas-project/celeritas) · [issues](https://github.com/celeritas-project/celeritas/issues) |
+| **AdePT** | Geant4 plugin offloading EM transport | run `example1` on new geometries, profile kernels, add examples, docs | [repo](https://github.com/apt-sim/AdePT) · [issues](https://github.com/apt-sim/AdePT/issues) |
+| **G4HepEm** | Compact EM physics used by AdePT | add/verify physics processes, unit tests, table validation | [repo](https://github.com/mnovak42/g4hepem) |
+| **VecGeom** | Vectorized/GPU geometry used by both | geometry unit tests, shape implementations, benchmarks | [CERN GitLab](https://gitlab.cern.ch/VecGeom/VecGeom) |
+
+Ways to start: reproduce a CPU-vs-GPU speed-up for your detector/particle mix, pick a "good first issue" on Celeritas or AdePT, try your own GDML geometry and report where GPU transport helps most (EM showers) and least (hadronic-heavy events), or improve docs and examples.
+
+---
+
 ## Further reading
 
 - Celeritas user documentation: https://celeritas-project.github.io/celeritas/user/index.html
 - Celeritas Geant4 examples: https://github.com/celeritas-project/celeritas/tree/main/example/geant4
+- AdePT project and examples: https://github.com/apt-sim/AdePT
 - DD4hep project documentation: https://dd4hep.web.cern.ch/dd4hep/
 - Geant4 documentation portal: https://geant4.web.cern.ch/documentation
 - TileCal geometry repository used for this lesson: https://github.com/celeritas-project/atlas-tilecal-integration
 
 ---
 
-## 8 Clean-up
+## 10 Clean-up
 
 ```bash
 # %%bash --no-raise-error
